@@ -28,16 +28,17 @@ class Content extends React.Component {
     const uploadedFiles = fileInput.files;
     if (uploadedFiles.length > 0) {
       const uploadedFile = uploadedFiles[0];
-      // console.log(this.state.imgURL);
-      // console.log(uploadedFiles[0].name);
-      // console.log(uploadedFiles[0].size); 
       this.displayImage(uploadedFile);
     }
   }
 
   displayImage(file) {
-    document.getElementsByClassName("drop")[0].style.display = "none";
-    this.setState( {imgURL : URL.createObjectURL(file)} ); // Setting state triggers re-render
+    console.log(file);
+    const imageTypes = ['image/jpg','image/jpeg','image/png','image/raw','image/cr2','image/nef','image/bmp','image/tif','image/tiff'];
+    if (file && imageTypes.includes(file['type'])) {
+      document.getElementsByClassName("drop")[0].style.display = "none";
+      this.setState( {imgURL : URL.createObjectURL(file)} ); // Setting state triggers re-render
+    }
   }
 
   // Recognize drop event on target element
@@ -104,16 +105,15 @@ class UploadedImage extends React.Component {
     let ctx = imgCanvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(myImg, 0, 0, myImg.naturalWidth, myImg.naturalHeight);
-
-    this.setState();
+    this.setState(); // Trigger re-render of UploadedImage to view newly drawn image
   }
 
   render() {
     return (
       <div id="previews">
-        <img id="image-upload"  src={this.props.imageURL} alt="original upload" onLoad={this.handleImageLoaded}/>
+        <img id="image-upload" src={this.props.imageURL} alt="original upload" onLoad={this.handleImageLoaded}/>
         {/* <img id="image-upload-2" src={this.props.imageURL} alt="uploaded image" /> */}
-        <canvas id="image-canvas"  alt="edited upload"></canvas>
+        <canvas id="image-canvas" alt="edited upload"></canvas>
       </div>
     );
   }
@@ -130,7 +130,20 @@ class Editor extends React.Component {
     let myImg = document.getElementById("image-upload");
     let imgCanvas = document.getElementById("image-canvas");
     // Check that they are equivalent? that imgCanvas has stuff?
+    if (myImg.naturalWidth === imgCanvas.width) {
+      let ctx = imgCanvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+      const data = imageData.data;
+      for (let i=0; i<data.length; i += 4) {
+        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        data[i] = avg;
+        data[i+1] = avg;
+        data[i+2] = avg;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
   }
+
   render() {
     return (
       <div id="editor">
