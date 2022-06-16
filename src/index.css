@@ -26,7 +26,8 @@ header {
 .content {
   width: 100vw;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
   height: calc(100vh - 70px);
 }
@@ -57,4 +58,26 @@ header {
   background-color: #282c34;
   color: white;
   font-size: 16px;
+}
+
+#previews {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 80vw;
+}
+
+#image-upload, #image-canvas {
+  max-width: 40vw;
+  /* max-height: 70vw; */
+  max-height: 800px; /* Combination of vw and px allows maintaining aspect ratio while maxing out image display size */
+}
+
+#editor {
+  width: 20vw;
+  border: 1px solid red;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
 }
