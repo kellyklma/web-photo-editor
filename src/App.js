@@ -1,7 +1,6 @@
-import logo from './logo.svg';
 import './App.css';
 import React from 'react';
-import { render } from '@testing-library/react';
+// import { render } from '@testing-library/react';
 
 class Header extends React.Component {
   render() {
@@ -15,23 +14,54 @@ class Content extends React.Component {
   constructor(props) {
     super(props);
     this.browseFiles = this.browseFiles.bind(this);
+    this.uploadImage = this.uploadImage.bind(this);
     this.displayImage = this.displayImage.bind(this);
+    this.dropHandler = this.dropHandler.bind(this);
+    this.dragOverHandler = this.dragOverHandler.bind(this);
     this.state = {
       imgURL: ""
     };
   }
   
-  displayImage(event) {
-    document.getElementsByClassName("drop")[0].style.display = "none";
+  uploadImage(event) {
     const fileInput = document.getElementById("browse-files");
     const uploadedFiles = fileInput.files;
-  
-    if (uploadedFiles.length === 1) {
-      this.setState( {imgURL : URL.createObjectURL(uploadedFiles[0])} );
-      console.log(this.state.imgURL);
-      console.log(uploadedFiles[0].name);
-      console.log(uploadedFiles[0].size); 
+    if (uploadedFiles.length > 0) {
+      const uploadedFile = uploadedFiles[0];
+      // console.log(this.state.imgURL);
+      // console.log(uploadedFiles[0].name);
+      // console.log(uploadedFiles[0].size); 
+      this.displayImage(uploadedFile);
     }
+  }
+
+  displayImage(file) {
+    document.getElementsByClassName("drop")[0].style.display = "none";
+    this.setState( {imgURL : URL.createObjectURL(file)} ); // Setting state triggers re-render
+  }
+
+  // Recognize drop event on target element
+  dropHandler(event) {
+    console.log("Drop handler");
+    event.preventDefault();
+    let file;
+    if (event.dataTransfer.items) {
+      if (event.dataTransfer.items[0].kind === 'file') {
+        file = event.dataTransfer.items[0].getAsFile();
+        console.log("file name: " + file.name);
+      }
+      else {
+        file = event.dataTransfer.files[0];
+        console.log("name: " + file.name);
+      }
+      this.displayImage(file);
+    }
+  }
+
+  // Turns off browser's default drag behavior over the target element
+  dragOverHandler(event) {
+    console.log("Dragover handler");
+    event.preventDefault();
   }
 
   browseFiles(event) {
@@ -42,9 +72,9 @@ class Content extends React.Component {
   render() {
     return (
       <div className="content">
-        <div className="drop">
+        <div className="drop" onDrop={this.dropHandler} onDragOver={this.dragOverHandler}>
           <p>drag and drop a file to edit</p>
-          <input type="file" id="browse-files" name="file" accept=".jpg,.jpeg,.png,.raw,.cr2,.nef,.bmp,.tif,.tiff" onChange={this.displayImage}/>
+          <input type="file" id="browse-files" name="file" accept=".jpg,.jpeg,.png,.raw,.cr2,.nef,.bmp,.tif,.tiff" onChange={this.uploadImage}/>
           <button id="custom-upload" onClick={this.browseFiles}>browse</button>
         </div>
         { (this.state.imgURL !== "") && <UploadedImage imageURL={this.state.imgURL}/>}
@@ -61,8 +91,7 @@ class UploadedImage extends React.Component {
   }
 
   handleImageLoaded() {
-    const { loadImage, Image } = require('canvas');
-    // const myImg = loadImage(this.props.imageURL);
+    //const { loadImage, Image } = require('canvas');
     let myImg = document.getElementById("image-upload");
     let imgCanvas = document.getElementById("image-canvas");
 
@@ -82,10 +111,9 @@ class UploadedImage extends React.Component {
   render() {
     return (
       <div id="previews">
-        <img id="image-upload"  src={this.props.imageURL} alt="uploaded image" onLoad={this.handleImageLoaded}/>
+        <img id="image-upload"  src={this.props.imageURL} alt="original upload" onLoad={this.handleImageLoaded}/>
         {/* <img id="image-upload-2" src={this.props.imageURL} alt="uploaded image" /> */}
         <canvas id="image-canvas"  alt="edited upload"></canvas>
-       
       </div>
     );
   }
@@ -101,6 +129,7 @@ class Editor extends React.Component {
     // Ensure image drawn to canvas
     let myImg = document.getElementById("image-upload");
     let imgCanvas = document.getElementById("image-canvas");
+    // Check that they are equivalent? that imgCanvas has stuff?
   }
   render() {
     return (
@@ -118,7 +147,6 @@ function App() {
       <header className="App-header">
         <Header />
       </header>
-      
       <Content />
     </div>
   );
