@@ -77,7 +77,6 @@ header {
   -o-object-fit: cover; 
   object-fit: cover;
   overflow: hidden;
-  align-items: center;
 }
 
 #editor {

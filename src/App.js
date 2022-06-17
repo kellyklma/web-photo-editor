@@ -123,14 +123,13 @@ class Editor extends React.Component {
   constructor(props) {
     super(props);
     this.doEdit = this.doEdit.bind(this);
+    this.brightenImg = this.brightenImg.bind(this);
   }
 
   doEdit() {
-    // Ensure image drawn to canvas
     let myImg = document.getElementById("image-upload");
     let imgCanvas = document.getElementById("image-canvas");
-    // Check that they are equivalent? that imgCanvas has stuff?
-    if (myImg.naturalWidth === imgCanvas.width) {
+    if (myImg.naturalWidth === imgCanvas.width) { // Ensure canvas image has been drawn first
       let ctx = imgCanvas.getContext('2d');
       const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
       const data = imageData.data;
@@ -144,11 +143,32 @@ class Editor extends React.Component {
     }
   }
 
+  brightenImg() {
+    console.log("brightening");
+    let myImg = document.getElementById("image-upload");
+    let imgCanvas = document.getElementById("image-canvas");
+    if (myImg.naturalWidth === imgCanvas.width) { // Ensure canvas image has been drawn first
+      let ctx = imgCanvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+      const data = imageData.data;
+      let value = 20; // 0-100
+
+      for (let i=0; i<data.length; i += 4) {
+        data[i] = Math.max(0, Math.min(255, data[i] - Math.round(255 * -(value/100))));
+        data[i+1] = Math.max(0, Math.min(255, data[i+1] - Math.round(255 * -(value/100))));
+        data[i+2] = Math.max(0, Math.min(255, data[i+2] - Math.round(255 * -(value/100))));
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+  }
+
+  // Edit options: grayscale, saturation, brightness, contrast
   render() {
     return (
-      <div id="editor">
+      <div id="editor"> 
         <input type="number" id="edit-val" />
-        <button id="edit-photo" onClick={this.doEdit}>Edit</button>
+        <button id="edit-photo" onClick={this.doEdit}>Grayscale</button>
+        <button id="brighten-btn" onClick={this.brightenImg}>Brighten</button>
       </div>
     )
   }
