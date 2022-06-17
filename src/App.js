@@ -1,5 +1,6 @@
 import './App.css';
 import React from 'react';
+import BrightnessSlider from './BrightnessSlider';
 // import { render } from '@testing-library/react';
 
 class Header extends React.Component {
@@ -162,6 +163,8 @@ class Editor extends React.Component {
     }
   }
 
+
+
   // Edit options: grayscale, saturation, brightness, contrast
   render() {
     return (
@@ -169,10 +172,15 @@ class Editor extends React.Component {
         <input type="number" id="edit-val" />
         <button id="edit-photo" onClick={this.doEdit}>Grayscale</button>
         <button id="brighten-btn" onClick={this.brightenImg}>Brighten</button>
+        <BrightnessSlider />
       </div>
     )
   }
 }
+
+
+
+
 
 function App() {
   return (
@@ -184,5 +192,7 @@ function App() {
     </div>
   );
 }
+
+
 
 export default App;
