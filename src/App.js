@@ -151,7 +151,7 @@ class Editor extends React.Component {
       let ctx = imgCanvas.getContext('2d');
       const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
       const data = imageData.data;
-      let value = 20; // 0-100
+      let value = 10; // 0-100
 
       for (let i=0; i<data.length; i += 4) {
         data[i] = Math.max(0, Math.min(255, data[i] - Math.round(255 * -(value/100))));
