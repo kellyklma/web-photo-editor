@@ -1,7 +1,26 @@
 import './App.css';
 import React from 'react';
-import BrightnessSlider from './BrightnessSlider';
-// import { render } from '@testing-library/react';
+import Slider from '@mui/material/Slider';
+import Typography from '@mui/material/Typography';
+
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      light: '#757ce8',
+      main: '#fafafa',
+      dark: '#002884',
+      contrastText: '#fff',
+    },
+    secondary: {
+      light: '#ff7961',
+      main: '#757575',
+      dark: '#ba000d',
+      contrastText: '#000',
+    },
+  },
+});
 
 class Header extends React.Component {
   render() {
@@ -93,13 +112,10 @@ class UploadedImage extends React.Component {
   }
 
   handleImageLoaded() {
-    //const { loadImage, Image } = require('canvas');
     let myImg = document.getElementById("image-upload");
     let imgCanvas = document.getElementById("image-canvas");
-
     imgCanvas.width = myImg.naturalWidth;
     imgCanvas.height = myImg.naturalHeight;
-
     imgCanvas.naturalWidth = myImg.naturalWidth;
     imgCanvas.naturalHeight = myImg.naturalHeight;
 
@@ -124,7 +140,17 @@ class Editor extends React.Component {
   constructor(props) {
     super(props);
     this.doEdit = this.doEdit.bind(this);
-    this.brightenImg = this.brightenImg.bind(this);
+    this.filterBrightness = this.filterBrightness.bind(this);
+    this.handleBrightness = this.handleBrightness.bind(this);
+    this.handleContrast = this.handleContrast.bind(this);
+    this.setOriginalData = this.setOriginalData.bind(this);
+    this.state = {
+      setOriginal: false,
+      originalData: null,
+      newImageData: null,
+      brightnessValue: 0,
+      contrastValue: 0
+    }
   }
 
   doEdit() {
@@ -144,43 +170,113 @@ class Editor extends React.Component {
     }
   }
 
-  brightenImg() {
-    console.log("brightening");
-    let myImg = document.getElementById("image-upload");
-    let imgCanvas = document.getElementById("image-canvas");
-    if (myImg.naturalWidth === imgCanvas.width) { // Ensure canvas image has been drawn first
-      let ctx = imgCanvas.getContext('2d');
-      const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-      const data = imageData.data;
-      let value = 10; // 0-100
+  filterBrightness(value) {
+    const data = this.state.originalData.data;
+    const newImgData = this.state.newImageData;
+    const newData = newImgData.data;
+    for (let i=0; i<data.length; i += 4) {
+      newData[i] = Math.max(0, Math.min(255, data[i] - Math.round(255 * -(value/100)))); // r
+      newData[i+1] = Math.max(0, Math.min(255, data[i+1] - Math.round(255 * -(value/100)))); // g
+      newData[i+2] = Math.max(0, Math.min(255, data[i+2] - Math.round(255 * -(value/100)))); // b
+      newData[i+3] = data[i+3]; // a
+    }
+    let ctx = document.getElementById("image-canvas").getContext('2d');
+    ctx.putImageData(newImgData, 0, 0);
+  }
 
-      for (let i=0; i<data.length; i += 4) {
-        data[i] = Math.max(0, Math.min(255, data[i] - Math.round(255 * -(value/100))));
-        data[i+1] = Math.max(0, Math.min(255, data[i+1] - Math.round(255 * -(value/100))));
-        data[i+2] = Math.max(0, Math.min(255, data[i+2] - Math.round(255 * -(value/100))));
-      }
-      ctx.putImageData(imageData, 0, 0);
+  filterContrast(value) {
+    value *= 2.55;
+    const imageData = this.state.newImageData;
+    const data = imageData.data;
+    // Formula from: https://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/image-processing-algorithms-part-5-contrast-adjustment/
+    const factor = (259 * (value + 255)) / (255 * (259 - value));
+    for (let i=0; i<data.length; i += 4) {
+      data[i] = Math.trunc( factor * ( data[i] - 128 ) + 128 ); // r
+      data[i+1] = Math.trunc( factor * ( data[i+1] - 128 ) + 128 ); // g
+      data[i+2] = Math.trunc( factor * ( data[i+2] - 128 ) + 128 ); // b
+    }
+    let ctx = document.getElementById("image-canvas").getContext('2d');
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  handleBrightness(event, newBrightness) {
+    console.log("handling brightness");
+    this.setState( { brightnessValue : newBrightness } );
+    // Call function that runs all filters
+    if (!this.state.setOriginal) {
+      this.setOriginalData();
     }
   }
 
+  handleContrast(event, newContrast) {
+    console.log("handleContrast");
+    this.setState( { contrastValue: newContrast });
+    if (!this.state.setOriginal) {
+      this.setOriginalData();
+    }
+  }
 
+  setOriginalData() {
+    console.log("setting original");
+    // run all filtering functions on ORIGINAL IMAGE DATA in a designated order using state variables (input settings)
+    let myImg = document.getElementById("image-upload");
+    let imgCanvas = document.getElementById("image-canvas");
+    if (myImg && imgCanvas && myImg.naturalWidth === imgCanvas.width) { // Ensure canvas image has been drawn first
+      // Save original image data to state variable
+      let ctx = imgCanvas.getContext('2d');
+      let imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height)
+      let newData = new Uint8ClampedArray(imgData.data);
+      let newImgData = new ImageData(newData, imgData.width, imgData.height, { colorspace: "srgb" });
+      this.setState({ originalData: imgData, setOriginal: true, newImageData: newImgData });
+    }
+  }
 
   // Edit options: grayscale, saturation, brightness, contrast
+  // Provide slider a pre-slider edit ctx relative to which brightness is modified by the slider
   render() {
+    console.log(this.state);
+    if (this.state.setOriginal) {
+      // Runs upon state changes after original image data has been obtained
+      // call filtering functions here
+      this.filterBrightness(this.state.brightnessValue);
+      // any later filters run will use "newImageData" as the original to edit off of
+      this.filterContrast(this.state.contrastValue);
+    }
+
     return (
       <div id="editor"> 
-        <input type="number" id="edit-val" />
         <button id="edit-photo" onClick={this.doEdit}>Grayscale</button>
-        <button id="brighten-btn" onClick={this.brightenImg}>Brighten</button>
-        <BrightnessSlider />
+        <ThemeProvider theme={theme}>
+          <Typography id="brightness-label" color="primary.contrastText" gutterBottom>Brightness</Typography>
+          <Slider 
+            id="brightness-slider" 
+            aria-label="Brightness slider" 
+            value={this.state.brightnessValue} 
+            min={0} 
+            max={100} 
+            step={20} 
+            marks 
+            valueLabelDisplay="auto" 
+            onChangeCommitted={this.handleBrightness}
+          />
+          <Typography id="contrast-label" color="primary.contrastText" gutterBottom>Contrast</Typography>
+          <Slider 
+            id="contrast-slider" 
+            aria-label="Saturation slider" 
+            value={this.state.contrastValue} 
+            min={-100} 
+            max={100} 
+            step={20} 
+            marks 
+            valueLabelDisplay="auto" 
+            onChangeCommitted={this.handleContrast}
+          />
+        </ThemeProvider>
+
       </div>
-    )
+    );
   }
 }
-
-
-
-
 
 function App() {
   return (
@@ -192,7 +288,5 @@ function App() {
     </div>
   );
 }
-
-
 
 export default App;
