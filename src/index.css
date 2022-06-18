@@ -81,9 +81,11 @@ header {
 
 #editor {
   width: 20vw;
-  border: 1px solid red;
+  max-width: 180px;
+  /* border: 1px solid red; */
   height: 70vh;
   display: flex;
   flex-direction: column;
-  padding: 30px;
+  padding: 4vw;
+  
 }
