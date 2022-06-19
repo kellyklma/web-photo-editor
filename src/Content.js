@@ -12,8 +12,7 @@ export default class Content extends React.Component {
       this.handleImageLoaded = this.handleImageLoaded.bind(this);
       this.state = {
         imgURL: "",
-        originalImageData: null,
-        newImageData: null
+        originalImageData: null
       };
     }
     
@@ -31,7 +30,7 @@ export default class Content extends React.Component {
       const imageTypes = ['image/jpg','image/jpeg','image/png','image/raw','image/cr2','image/nef','image/bmp','image/tif','image/tiff'];
       if (file && imageTypes.includes(file['type'])) {
         document.getElementsByClassName("drop")[0].style.display = "none";
-        this.setState( {imgURL : URL.createObjectURL(file)} ); // Setting state triggers re-render
+        this.setState( {imgURL : URL.createObjectURL(file)} ); // Change to state triggers re-render: if same image uploaded, do nothing
       }
     }
   
@@ -67,18 +66,19 @@ export default class Content extends React.Component {
     handleImageLoaded(event) {
       let myImg = document.getElementById("image-upload");
       let imgCanvas = document.getElementById("image-canvas");
+			if (this.state.originalImageData) { // Indicates upload of new image to overwrite existing image
+				let ctx = imgCanvas.getContext("2d");
+				ctx.clearRect(0, 0, imgCanvas.width, imgCanvas.height);
+			}
       imgCanvas.width = myImg.naturalWidth;
       imgCanvas.height = myImg.naturalHeight;
       imgCanvas.naturalWidth = myImg.naturalWidth;
       imgCanvas.naturalHeight = myImg.naturalHeight;
-  
       let ctx = imgCanvas.getContext("2d");
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(myImg, 0, 0, myImg.naturalWidth, myImg.naturalHeight);
       let imgData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-      let newData = new Uint8ClampedArray(imgData.data);
-      let newImgData = new ImageData(newData, imgData.width, imgData.height, { colorspace: "srgb" });
-      this.setState({ originalImageData: imgData, newImageData: newImgData }); // Trigger re-render of UploadedImage to view newly drawn image and display editor
+      this.setState({ originalImageData: imgData }); // Trigger re-render of UploadedImage to view newly drawn image and display editor
     }
   
     render() {
@@ -97,7 +97,7 @@ export default class Content extends React.Component {
               <canvas id="image-canvas" alt="edited upload"></canvas>
             </div>
           }
-          { (this.state.originalImageData) && (this.state.newImageData) && <Editor originalImageData={this.state.originalImageData} newImageData={this.state.newImageData}/>}
+          { (this.state.originalImageData) && <Editor originalImageData={this.state.originalImageData} />}
         </div>
       );
     }

@@ -89,3 +89,12 @@ header {
   padding: 4vw;
   
 }
+
+#section-divider {
+  visibility: hidden;
+  margin: 30px 0px;
+}
+
+#grayscale-label, #invert-label {
+  color: white;
+}
