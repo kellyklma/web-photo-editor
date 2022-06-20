@@ -148,37 +148,44 @@ export default class Editor extends React.Component {
       const dataLength = data.length;
 
       const t0 = performance.now();
+      // uint8clampedarray clamps values >255 or <0 to 255 and 0, respectively (need not take min vs 255 or max vs 0)
       for (let i=0; i<dataLength; i += 4) {
-        data[i] = Math.max(0, Math.min(255, data[i] - value)); // r
-        data[i+1] = Math.max(0, Math.min(255, data[i+1] - value)); // g
-        data[i+2] = Math.max(0, Math.min(255, data[i+2] - value)); // b
+        data[i] = data[i] - value; // r
+        data[i+1] = data[i+1] - value; // g
+        data[i+2] = data[i+2] - value; // b
       }
+     
       const t1 = performance.now();
-      console.log("took " + (t1-t0));
+      console.log("brightness took " + (t1-t0));
 
       ctx.putImageData(imageData, 0, 0);
       return imageData;
     }
+    
   
     // Filter contrast of canvas data
     filterContrast(value) {
       if (value === 0) { return; }
-      console.log("filterContrast")
       value *= 2.55;
       const imgCanvas = document.getElementById("image-canvas");
 			const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
       const data = imageData.data;
       const dataLength = data.length;
-      // Formula from: https://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/image-processing-algorithms-part-5-contrast-adjustment/
       const factor = (259 * (value + 255)) / (255 * (259 - value));
+      const c = -128 * factor + 128;
+      
+      const t0 = performance.now();
+      // uint8clampedarray clamps values >255 or <0 to 255 and 0, respectively
       for (let i=0; i<dataLength; i += 4) {
-        data[i] = Math.trunc( factor * ( data[i] - 128 ) + 128 ); // r
-        data[i+1] = Math.trunc( factor * ( data[i+1] - 128 ) + 128 ); // g
-        data[i+2] = Math.trunc( factor * ( data[i+2] - 128 ) + 128 ); // b
+        data[i] = factor * data[i] + c; // r
+        data[i+1] = factor * data[i+1] + c; // g
+        data[i+2] = factor * data[i+2] + c; // b
       }
+      const t1 = performance.now();
+      console.log("contrast took " + (t1-t0));
+
       ctx.putImageData(imageData, 0, 0);
-      console.log("done filterContrast");
       return imageData;
     }
   
@@ -186,7 +193,7 @@ export default class Editor extends React.Component {
       // console.log("handleBrightness");
       // console.log(newBrightness);
 			if (newBrightness !== this.state.brightnessValue) {
-				this.setState( { brightnessValue : newBrightness }, console.log("setState callback") );
+				this.setState( { brightnessValue : newBrightness });
 				this.runFilters(newBrightness, this.state.contrastValue, this.state.grayscaleChecked, this.state.invertChecked);
 			}
     }
@@ -224,7 +231,7 @@ export default class Editor extends React.Component {
               id="brightness-slider" 
               aria-label="Brightness slider" 
               value={this.state.brightnessValue} 
-              min={0} 
+              min={-100} 
               max={100} 
               valueLabelDisplay="auto" 
               onChangeCommitted={this.handleBrightness}
