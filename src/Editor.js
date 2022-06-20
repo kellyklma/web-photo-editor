@@ -108,9 +108,7 @@ export default class Editor extends React.Component {
       const dataLength = data.length;
 			for (let i=0; i<dataLength; i += 4) {
 				const avg = (data[i] + data[i+1] + data[i+2]) / 3;
-				data[i] = avg;
-				data[i+1] = avg;
-				data[i+2] = avg;
+				data[i] = data[i+1] = data[i+2] = avg;
 			}
 			ctx.putImageData(imageData, 0, 0);
     }
@@ -140,7 +138,7 @@ export default class Editor extends React.Component {
     filterBrightness(value) {
       if (value === 0) { return; }
       // console.log("filterBrightness")
-      value = Math.round(255* -(value/100));
+      value = Math.round(-255 * value / 100);
       const imgCanvas = document.getElementById("image-canvas");
 			const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
@@ -161,7 +159,6 @@ export default class Editor extends React.Component {
       ctx.putImageData(imageData, 0, 0);
       return imageData;
     }
-    
   
     // Filter contrast of canvas data
     filterContrast(value) {
@@ -190,8 +187,6 @@ export default class Editor extends React.Component {
     }
   
     handleBrightness(event, newBrightness) {
-      // console.log("handleBrightness");
-      // console.log(newBrightness);
 			if (newBrightness !== this.state.brightnessValue) {
 				this.setState( { brightnessValue : newBrightness });
 				this.runFilters(newBrightness, this.state.contrastValue, this.state.grayscaleChecked, this.state.invertChecked);
