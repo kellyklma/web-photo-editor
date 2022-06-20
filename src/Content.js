@@ -12,7 +12,8 @@ export default class Content extends React.Component {
       this.handleImageLoaded = this.handleImageLoaded.bind(this);
       this.state = {
         imgURL: "",
-        originalImageData: null
+        originalImageData: null,
+        worker: this.props.worker
       };
     }
     
@@ -97,7 +98,7 @@ export default class Content extends React.Component {
               <canvas id="image-canvas" alt="edited upload"></canvas>
             </div>
           }
-          { (this.state.originalImageData) && <Editor originalImageData={this.state.originalImageData} />}
+          { (this.state.originalImageData) && <Editor originalImageData={this.state.originalImageData} worker={this.state.worker}/>}
         </div>
       );
     }

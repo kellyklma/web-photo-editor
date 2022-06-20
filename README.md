@@ -16,3 +16,4 @@ Here are some links that helped me get going with this project:
 * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas#painting_pixel_data_into_a_context
 * https://appinitio.medium.com/do-you-really-know-your-photo-apps-editing-tools-b7aeb32cd988
 * https://www.dfstudios.co.uk/articles/programming/image-programming-algorithms/image-processing-algorithms-part-5-contrast-adjustment/
+https://crypt.codemancers.com/posts/2020-02-17-concurrency_in_javascript_browser/

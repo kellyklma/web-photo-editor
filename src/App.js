@@ -1,6 +1,7 @@
 import './App.css';
 import React from 'react';
 import Content from './Content.js';
+import Worker from 'web-worker';
 
 class Header extends React.Component {
   render() {
@@ -11,12 +12,13 @@ class Header extends React.Component {
 }
 
 function App() {
+  const worker = new Worker('brightness-worker.js');
   return (
     <div className="App"> 
       <header className="App-header">
         <Header />
       </header>
-      <Content />
+      <Content worker={worker} />
     </div>
   );
 }
