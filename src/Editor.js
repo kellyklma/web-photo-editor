@@ -55,7 +55,7 @@ export default class Editor extends React.Component {
 		componentDidUpdate(prevProps) {
 			if (prevProps.originalImageData !== this.props.originalImageData) {
 				this.setState({ 
-          originalData: this.props.originalImageData,
+          originalImageData: this.props.originalImageData,
 					brightnessValue: 0,
 					contrastValue: 0,
           grayscaleChecked: false,
