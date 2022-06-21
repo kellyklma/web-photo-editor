@@ -36,8 +36,8 @@ export default class Editor extends React.Component {
 			this.invert = this.invert.bind(this);
 
       this.getOriginal = this.getOriginal.bind(this);
-      this.filterBrightness = this.filterBrightness.bind(this);
-			this.filterContrast = this.filterContrast.bind(this);
+      this.filter = this.filter.bind(this);
+			// this.filterContrast = this.filterContrast.bind(this);
       this.handleBrightness = this.handleBrightness.bind(this);
       this.handleContrast = this.handleContrast.bind(this);
       this.runFilters = this.runFilters.bind(this);
@@ -89,7 +89,7 @@ export default class Editor extends React.Component {
 		handleGrayscale(event) {
       this.setState( { grayscaleChecked : event.target.checked } );
       if (event.target.checked) { // Turning on grayscale, do not need to complete all edits again
-        this.grayscale();
+        this.grayscale(document.getElementById("image-canvas"));
       }
       else { // Turning off grayscale, need to redo all edits to return to colored mode
         this.runFilters(this.state.brightnessValue, this.state.contrastValue, event.target.checked, this.state.invertChecked);
@@ -98,11 +98,11 @@ export default class Editor extends React.Component {
 
 		handleInvert(event) {
       this.setState( { invertChecked : event.target.checked } );
-      this.invert();
+      this.invert(document.getElementById("image-canvas"));
 		}
 
-    grayscale() {
-      const imgCanvas = document.getElementById("image-canvas");
+    grayscale(imgCanvas) {
+      // const imgCanvas = document.getElementById("image-canvas");
 			const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 			const data = imageData.data;
@@ -114,8 +114,8 @@ export default class Editor extends React.Component {
 			ctx.putImageData(imageData, 0, 0);
     }
 
-		invert() {
-      const imgCanvas = document.getElementById("image-canvas");
+		invert(imgCanvas) {
+      // const imgCanvas = document.getElementById("image-canvas");
 			const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 			const data = imageData.data;
@@ -129,26 +129,34 @@ export default class Editor extends React.Component {
 		}
   
     // Replace canvas data with original data
-    getOriginal() {
-      // console.log("getOriginal");
-      const ctx = document.getElementById("image-canvas").getContext('2d');
-      ctx.putImageData(this.state.originalImageData, 0, 0);
+    getOriginal(imgCanvas) {
+      const myImg = document.getElementById("image-upload");
+      imgCanvas.width = myImg.naturalWidth;
+      imgCanvas.height = myImg.naturalHeight;
+      imgCanvas.naturalWidth = myImg.naturalWidth;
+      imgCanvas.naturalHeight = myImg.naturalHeight;
+      const ctx = imgCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(myImg, 0, 0, myImg.naturalWidth, myImg.naturalHeight);
+      console.log(ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height));
     }
 
     // Filter brightness of canvas data
-    filterBrightness(value, imgCanvas) {
-      if (value === 0) { return; } 
-      console.log("filterBrightness");
+    filter(value_b, value_c, imgCanvas) {
+      
+      console.log("filter");
       const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 
       const worker = this.state.worker;
 
       let promise = new Promise(function(resolve, reject) {
+        if (value_b === 0 && value_c === 0) { resolve(imageData); } 
         worker.postMessage({ 
-          brightness: value, 
-          currImageData: imageData,
-          filter: "brightness" });
+          brightness: value_b, 
+          contrast: value_c,
+          currImageData: imageData
+        });
         worker.onerror = (err) => {
           reject(new Error(err));
         };
@@ -162,25 +170,25 @@ export default class Editor extends React.Component {
       return promise;
     }
   
-    // Filter contrast of canvas data
-    filterContrast(value, imgCanvas) {
-      if (value === 0) { return; }
-      value *= 2.55;
-			const ctx = imgCanvas.getContext('2d');
-			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-      const data = imageData.data;
-      const dataLength = data.length;
-      const factor = (259 * (value + 255)) / (255 * (259 - value));
-      const c = -128 * factor + 128;
+    // // Filter contrast of canvas data
+    // filterContrast(value, imgCanvas) {
+    //   if (value === 0) { return; }
+    //   value *= 2.55;
+		// 	const ctx = imgCanvas.getContext('2d');
+		// 	const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+    //   const data = imageData.data;
+    //   const dataLength = data.length;
+    //   const factor = (259 * (value + 255)) / (255 * (259 - value));
+    //   const c = -128 * factor + 128;
       
-      // uint8clampedarray clamps values >255 or <0 to 255 and 0, respectively
-      for (let i=0; i<dataLength; i += 4) {
-        data[i] = factor * data[i] + c; // r
-        data[i+1] = factor * data[i+1] + c; // g
-        data[i+2] = factor * data[i+2] + c; // b
-      }
-      ctx.putImageData(imageData, 0, 0);
-    }
+    //   // uint8clampedarray clamps values >255 or <0 to 255 and 0, respectively
+    //   for (let i=0; i<dataLength; i += 4) {
+    //     data[i] = factor * data[i] + c; // r
+    //     data[i+1] = factor * data[i+1] + c; // g
+    //     data[i+2] = factor * data[i+2] + c; // b
+    //   }
+    //   ctx.putImageData(imageData, 0, 0);
+    // }
   
     handleBrightness(event, newBrightness) {
 			if (newBrightness !== this.state.brightnessValue) {
@@ -197,25 +205,30 @@ export default class Editor extends React.Component {
     }
 
 		runFilters(brightness, contrast, grayscale, invert) {
-      // Apply original data to canvas
-      this.getOriginal();
 
-      // Filter existing canvas repeatedly in sequence
-      let imageCanvas = document.getElementById("image-canvas");
+      // Create temporary canvas to hold edit progress
+      const canvas = document.createElement("canvas");
 
+      // Apply original data to temporary canvas
+      this.getOriginal(canvas);
 
       const t0 = performance.now();
-			this.filterBrightness(brightness, imageCanvas).then(( ) => {
+			this.filter(brightness, contrast, canvas).then(() => {
+        // Promise fulfilled, continue with code
         const t1 = performance.now();
         console.log("brightness took " + (t1-t0)); 
   
-        this.filterContrast(contrast, imageCanvas);
-      });
-      
+        // this.filterContrast(contrast, canvas);
 
-      // Apply grayscale/invert on existing canvas if toggled
-      if (grayscale) { this.grayscale(); }
-      if (invert) { this.invert(); }
+        // Apply grayscale/invert on existing canvas if toggled
+        if (grayscale) { this.grayscale(canvas); }
+        if (invert) { this.invert(canvas); }
+  
+        // Draw temp canvas data onto actual canvas
+        const imageCanvas = document.getElementById("image-canvas");
+        const ctx = imageCanvas.getContext('2d');
+        ctx.putImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height), 0, 0);
+      });
 		}
 
     render() {

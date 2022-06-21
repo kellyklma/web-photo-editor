@@ -12,7 +12,7 @@ class Header extends React.Component {
 }
 
 function App() {
-  const worker = new Worker('brightness-worker.js');
+  const worker = new Worker('filter-worker.js');
   return (
     <div className="App"> 
       <header className="App-header">
