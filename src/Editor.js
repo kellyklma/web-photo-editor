@@ -48,7 +48,7 @@ export default class Editor extends React.Component {
         contrastValue: 0,
 				grayscaleChecked: false,
 				invertChecked: false,
-        worker: this.props.worker
+        workers: this.props.workers
       }
     }
 
@@ -137,27 +137,55 @@ export default class Editor extends React.Component {
 
     // Filter brightness of canvas data
     filterBrightness(value, imgCanvas) {
-      if (value === 0) { return; } 
-      console.log("filterBrightness");
-      const ctx = imgCanvas.getContext('2d');
-			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-
-      const worker = this.state.worker;
+      const workers = this.state.workers;
 
       let promise = new Promise(function(resolve, reject) {
-        worker.postMessage({ 
-          brightness: value, 
-          currImageData: imageData,
-          filter: "brightness" });
-        worker.onerror = (err) => {
-          reject(new Error(err));
-        };
-        worker.onmessage = function(e) {
-          const { time, newImageData } = e.data;
-          console.log(time);
-          ctx.putImageData(newImageData, 0, 0);
-          resolve(newImageData);
-        };
+        if (value === 0) { console.log("0"); resolve(imgCanvas.getContext('2d').getImageData); } 
+        console.log("filterBrightness");
+        value = Math.round(-255 * value / 100);
+  
+        const ctx = imgCanvas.getContext('2d');
+        // const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+  
+        const numWorkers = workers.length;
+        const segmentLength = imgCanvas.width*imgCanvas.height*4/numWorkers;
+        const segmentHeight = imgCanvas.height/numWorkers;
+  
+        const t0 = performance.now();
+
+        let numDone = 0;
+
+        workers.forEach(function(worker, n) {
+          console.log("starting worker at " + performance.now());
+          const imageData = ctx.getImageData(0, n*segmentHeight, imgCanvas.width, segmentHeight);
+
+          console.log("will post " + performance.now());
+          worker.postMessage({ 
+            value: value, 
+            currData: imageData.data,
+            filter: "brightness",
+            length: segmentLength
+          });
+          console.log("did post " + performance.now());
+
+
+          worker.onerror = (err) => {
+            reject(new Error(err));
+          };
+          worker.onmessage = function(e) {
+
+            // console.log(time);
+            imageData.data.set(e.data.newData);
+            ctx.putImageData(imageData, 0, n*segmentHeight);
+            numDone++;
+            console.log(numDone + " at " + (performance.now() - t0));
+            if (numDone === numWorkers) {
+              const t1 = performance.now();
+              console.log("brightness took " + (t1-t0)); 
+              resolve(ctx.getImageData);
+            }
+          };
+        })
       });
       return promise;
     }
@@ -204,10 +232,8 @@ export default class Editor extends React.Component {
       let imageCanvas = document.getElementById("image-canvas");
 
 
-      const t0 = performance.now();
 			this.filterBrightness(brightness, imageCanvas).then(( ) => {
-        const t1 = performance.now();
-        console.log("brightness took " + (t1-t0)); 
+ 
   
         this.filterContrast(contrast, imageCanvas);
       });

@@ -13,7 +13,7 @@ export default class Content extends React.Component {
       this.state = {
         imgURL: "",
         originalImageData: null,
-        worker: this.props.worker
+        workers: this.props.workers
       };
     }
     
@@ -98,7 +98,7 @@ export default class Content extends React.Component {
               <canvas id="image-canvas" alt="edited upload"></canvas>
             </div>
           }
-          { (this.state.originalImageData) && <Editor originalImageData={this.state.originalImageData} worker={this.state.worker}/>}
+          { (this.state.originalImageData) && <Editor originalImageData={this.state.originalImageData} workers={this.state.workers}/>}
         </div>
       );
     }

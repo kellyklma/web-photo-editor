@@ -12,13 +12,21 @@ class Header extends React.Component {
 }
 
 function App() {
-  const worker = new Worker('brightness-worker.js');
+  const numWorkers = 4;
+  // const numWorkers = navigator.hardwareConcurrency - 1;
+  console.log("threads " + navigator.hardwareConcurrency);
+  const workers = [];
+
+  for (let i=0; i<numWorkers; i++) {
+    workers.push(new Worker('filter-worker.js'));
+  }
+  
   return (
     <div className="App"> 
       <header className="App-header">
         <Header />
       </header>
-      <Content worker={worker} />
+      <Content workers={workers} />
     </div>
   );
 }
