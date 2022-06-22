@@ -1,3 +1,5 @@
+// App.js displays the header and renders the image editing display and functionality to the page.
+
 import './App.css';
 import React from 'react';
 import Content from './Content.js';
@@ -6,11 +8,12 @@ import Worker from 'web-worker';
 class Header extends React.Component {
   render() {
     return (
-      <p>web photo editor</p>
+      <p>Web photo editor</p>
     );
   }
 }
 
+// Creates a web worker for multithreading during image filtering
 function App() {
   const worker = new Worker('filter-worker.js');
   return (

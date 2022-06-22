@@ -1,3 +1,5 @@
+// Editor.js performs basic image filtering functionality.
+
 import React from 'react';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -5,7 +7,11 @@ import Switch from '@mui/material/Switch';
 import Slider from '@mui/material/Slider';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import UploadIcon from '@mui/icons-material/Upload';
+import DownloadIcon from '@mui/icons-material/Download';
+import HistoryIcon from '@mui/icons-material/History';
 
+// Designates colors for material UI components: sliders, switches, labels
 const theme = createTheme({
     palette: {
       primary: {
@@ -32,18 +38,20 @@ export default class Editor extends React.Component {
 
       this.handleGrayscale = this.handleGrayscale.bind(this);
       this.handleInvert = this.handleInvert.bind(this);
-      this.grayscale = this.grayscale.bind(this);
-			this.invert = this.invert.bind(this);
+      this.filterGrayscale = this.filterGrayscale.bind(this);
+			this.filterInvert = this.filterInvert.bind(this);
 
       this.getOriginal = this.getOriginal.bind(this);
-      this.filter = this.filter.bind(this);
-			// this.filterContrast = this.filterContrast.bind(this);
+
+      this.changedBrightness = this.changedBrightness.bind(this);
+      this.changedContrast = this.changedContrast.bind(this);
       this.handleBrightness = this.handleBrightness.bind(this);
       this.handleContrast = this.handleContrast.bind(this);
+ 
       this.runFilters = this.runFilters.bind(this);
 
       this.state = {
-        originalImageData: this.props.originalImageData,
+        originalImageData: this.props.originalImageData, // differentiates new image from old
         brightnessValue: 0,
         contrastValue: 0,
 				grayscaleChecked: false,
@@ -52,7 +60,7 @@ export default class Editor extends React.Component {
       }
     }
 
-    // Recognize upload of new image and reset state variables
+    // Recognizes upload of a new image (Editor re-rendered by Content.js) and resets state variables to default values
 		componentDidUpdate(prevProps) {
 			if (prevProps.originalImageData !== this.props.originalImageData) {
 				this.setState({ 
@@ -65,12 +73,13 @@ export default class Editor extends React.Component {
 			}
 		}
 
-		// Put originalImageData on the canvas and reset values
+		// Upon click of revert button, resets state variables to their default values and removes all image filtering
 		revert() {
 			this.setState( { brightnessValue: 0, contrastValue: 0, grayscaleChecked: false, invertChecked: false });
 			this.runFilters(0, 0, false, false);
 		}
 
+    // Upon click of download button, downloads the filtered canvas data in jpeg format to the user's file system
     handleDownload(event) {
 			const imageData = document.getElementById("image-canvas").toDataURL('image/jpeg', 0.8);
 			let tempLink = document.createElement('a');
@@ -81,28 +90,29 @@ export default class Editor extends React.Component {
 			document.body.removeChild(tempLink);
     }
 
+    // Upon click of upload button, displays file browser to allow selection of another photo to edit. 
+    // Selection is handled in Content.js and in componentDidUpdate() above
 		handleUpload(event) {
-			console.log("handleUpload");
 			document.getElementById("browse-files").click();
 		}
 
+    // Upon toggling the grayscale filter switch, updates the grayscale state variable and calls a 
+    // function to either perform or remove grayscale filtering according to the grayscale state
 		handleGrayscale(event) {
       this.setState( { grayscaleChecked : event.target.checked } );
-      if (event.target.checked) { // Turning on grayscale, do not need to complete all edits again
-        this.grayscale(document.getElementById("image-canvas"));
-      }
-      else { // Turning off grayscale, need to redo all edits to return to colored mode
-        this.runFilters(this.state.brightnessValue, this.state.contrastValue, event.target.checked, this.state.invertChecked);
-      }
+      event.target.checked && this.filterGrayscale(document.getElementById("image-canvas"));
+      !event.target.checked && this.runFilters(this.state.brightnessValue, this.state.contrastValue, event.target.checked, this.state.invertChecked);
 		}
 
+    // Updates the invert state variable and calls a function to perform the invert filter upon toggling of the invert filter switch
 		handleInvert(event) {
       this.setState( { invertChecked : event.target.checked } );
-      this.invert(document.getElementById("image-canvas"));
+      this.filterInvert(document.getElementById("image-canvas"));
 		}
 
-    grayscale(imgCanvas) {
-      // const imgCanvas = document.getElementById("image-canvas");
+    // Performs grayscale filtering of data on the canvas imgCanvas by replacing the r, g, and b intensities in the data array 
+    // with the average of the three colors' intensities
+    filterGrayscale(imgCanvas) {
 			const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 			const data = imageData.data;
@@ -114,8 +124,9 @@ export default class Editor extends React.Component {
 			ctx.putImageData(imageData, 0, 0);
     }
 
-		invert(imgCanvas) {
-      // const imgCanvas = document.getElementById("image-canvas");
+    // Performs inversion filtering of data on the canvas imgCanvas by taking the inverse of all rgb intensities in
+    // the data array: (255 - r), (255 - g), (255 - b)
+		filterInvert(imgCanvas) {
 			const ctx = imgCanvas.getContext('2d');
 			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 			const data = imageData.data;
@@ -128,7 +139,7 @@ export default class Editor extends React.Component {
 			ctx.putImageData(imageData, 0, 0);
 		}
   
-    // Replace canvas data with original data
+    // Replaces data of canvas imgCanvas with the original image data
     getOriginal(imgCanvas) {
       const myImg = document.getElementById("image-upload");
       imgCanvas.width = myImg.naturalWidth;
@@ -138,23 +149,48 @@ export default class Editor extends React.Component {
       const ctx = imgCanvas.getContext('2d');
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(myImg, 0, 0, myImg.naturalWidth, myImg.naturalHeight);
-      console.log(ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height));
     }
 
-    // Filter brightness of canvas data
-    filter(value_b, value_c, imgCanvas) {
-      
-      console.log("filter");
-      const ctx = imgCanvas.getContext('2d');
-			const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+    // Update brightness state variable and re-renders view to show new slider value with each change of brightness slider
+    changedBrightness(event, newBrightness) {
+      (newBrightness !== this.state.brightnessValue) && this.setState( { brightnessValue : newBrightness });
+    }
 
+    // Updates contrast state variable and re-renders view to show new slider value with each change of contrast slider
+    changedContrast(event, newContrast) {
+      (newContrast !== this.state.contrastValue) && this.setState( { contrastValue : newContrast });
+    }
+  
+    // Calls a function to perform image filtering with new brightness filtering value newBrightness upon committed change of brightness slider
+    handleBrightness(event, newBrightness) {
+      this.runFilters(newBrightness, this.state.contrastValue, this.state.grayscaleChecked, this.state.invertChecked);
+    }
+  
+    // Calls a function to perform image filtering with new contrast filtering value newContrast upon committed change of contrast slider
+    handleContrast(event, newContrast) {
+      this.runFilters(this.state.brightnessValue, newContrast, this.state.grayscaleChecked, this.state.invertChecked);
+    }
+
+    // Delegates web worker to filter in sequence the original data according to filtering parameters 
+    // brightness, contrast, grayscale, and invert. Displays the final product on the onscreen canvas.
+		runFilters(brightness, contrast, grayscale, invert) {
+      const t0 = performance.now();
+
+      // Create temporary canvas to hold original data and editing progress
+      const canvas = document.createElement("canvas");
+      this.getOriginal(canvas);
+      const tempCtx = canvas.getContext('2d');
+			const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Delegate brightness, contrast, grayscale, and inversion filtering of canvas data to web worker
       const worker = this.state.worker;
-
-      let promise = new Promise(function(resolve, reject) {
-        if (value_b === 0 && value_c === 0) { resolve(imageData); } 
+      const promise = new Promise(function(resolve, reject) {
+        if (brightness === 0 && contrast === 0) { resolve(imageData); } 
         worker.postMessage({ 
-          brightness: value_b, 
-          contrast: value_c,
+          brightness: brightness, // integer
+          contrast: contrast, // integer
+          grayscale: grayscale, // boolean
+          invert: invert, // boolean
           currImageData: imageData
         });
         worker.onerror = (err) => {
@@ -163,81 +199,34 @@ export default class Editor extends React.Component {
         worker.onmessage = function(e) {
           const { time, newImageData } = e.data;
           console.log(time);
-          ctx.putImageData(newImageData, 0, 0);
+          tempCtx.putImageData(newImageData, 0, 0);
           resolve(newImageData);
         };
       });
-      return promise;
-    }
-  
-    // // Filter contrast of canvas data
-    // filterContrast(value, imgCanvas) {
-    //   if (value === 0) { return; }
-    //   value *= 2.55;
-		// 	const ctx = imgCanvas.getContext('2d');
-		// 	const imageData = ctx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
-    //   const data = imageData.data;
-    //   const dataLength = data.length;
-    //   const factor = (259 * (value + 255)) / (255 * (259 - value));
-    //   const c = -128 * factor + 128;
-      
-    //   // uint8clampedarray clamps values >255 or <0 to 255 and 0, respectively
-    //   for (let i=0; i<dataLength; i += 4) {
-    //     data[i] = factor * data[i] + c; // r
-    //     data[i+1] = factor * data[i+1] + c; // g
-    //     data[i+2] = factor * data[i+2] + c; // b
-    //   }
-    //   ctx.putImageData(imageData, 0, 0);
-    // }
-  
-    handleBrightness(event, newBrightness) {
-			if (newBrightness !== this.state.brightnessValue) {
-				this.setState( { brightnessValue : newBrightness });
-				this.runFilters(newBrightness, this.state.contrastValue, this.state.grayscaleChecked, this.state.invertChecked);
-			}
-    }
-  
-    handleContrast(event, newContrast) {
-			if (newContrast !== this.state.contrastValue) {
-				this.setState( { contrastValue: newContrast });
-				this.runFilters(this.state.brightnessValue, newContrast, this.state.grayscaleChecked, this.state.invertChecked);
-			}
-    }
 
-		runFilters(brightness, contrast, grayscale, invert) {
-
-      // Create temporary canvas to hold edit progress
-      const canvas = document.createElement("canvas");
-
-      // Apply original data to temporary canvas
-      this.getOriginal(canvas);
-
-      const t0 = performance.now();
-			this.filter(brightness, contrast, canvas).then(() => {
-        // Promise fulfilled, continue with code
-        const t1 = performance.now();
-        console.log("brightness took " + (t1-t0)); 
-  
-        // this.filterContrast(contrast, canvas);
-
-        // Apply grayscale/invert on existing canvas if toggled
-        if (grayscale) { this.grayscale(canvas); }
-        if (invert) { this.invert(canvas); }
-  
-        // Draw temp canvas data onto actual canvas
+      // Once filtering is complete, draws temporary canvas data onto actual onscreen canvas
+			promise.then(() => {
         const imageCanvas = document.getElementById("image-canvas");
         const ctx = imageCanvas.getContext('2d');
         ctx.putImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height), 0, 0);
+
+        const t1 = performance.now();
+        console.log("filtering took " + (t1-t0)); 
       });
 		}
 
     render() {
-      // console.log(this.state);
       return (
         <div id="editor"> 
-					<button id="editor-revert" onClick={this.revert}>Revert changes</button>
-          <button id="editor-upload" onClick={this.handleUpload}>Upload</button>
-          <button id="editor-download" onClick={this.handleDownload}>Download</button>
+          <div id="revert-upload">
+            <button id="editor-revert" className="editor-btn" onClick={this.revert}><HistoryIcon/></button>
+            <button id="editor-download" className="editor-btn" onClick={this.handleDownload}><DownloadIcon/></button>
+            <button id="editor-upload" className="editor-btn" onClick={this.handleUpload}>Upload</button>
+            
+          </div>
+					
+          
+          <hr className="section-divider"></hr>
           <ThemeProvider theme={theme}>
             <Typography id="brightness-label" color="primary.contrastText" >Brightness</Typography>
             <Slider 
@@ -247,6 +236,7 @@ export default class Editor extends React.Component {
               min={-100} 
               max={100} 
               valueLabelDisplay="auto" 
+              onChange={this.changedBrightness}
               onChangeCommitted={this.handleBrightness}
             />
             <Typography id="contrast-label" color="primary.contrastText" >Contrast</Typography>
@@ -257,10 +247,10 @@ export default class Editor extends React.Component {
               min={-100} 
               max={100} 
               valueLabelDisplay="auto" 
+              onChange={this.changedContrast}
               onChangeCommitted={this.handleContrast}
             />
-            <hr id="section-divider"></hr>
-
+            <hr className="section-divider"></hr>
             <FormGroup>
               <FormControlLabel id="grayscale-label" control={
                 <Switch 
@@ -278,7 +268,7 @@ export default class Editor extends React.Component {
               } label="Invert" color="primary.contrastText" />
             </FormGroup>
           </ThemeProvider>
-          
+         
         </div>
       );
     }

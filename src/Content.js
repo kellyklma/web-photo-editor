@@ -1,22 +1,53 @@
+// Content.js enables image file upload with drag-and-drop or file browser, displays the original image beside an editing canvas,
+// and renders the editing toolbar upon successful image loading
+
 import React from 'react';
 import Editor from './Editor.js';
 
 export default class Content extends React.Component {
     constructor(props) {
       super(props);
+      this.dropHandler = this.dropHandler.bind(this);
+      this.dragOverHandler = this.dragOverHandler.bind(this);
       this.browseFiles = this.browseFiles.bind(this);
       this.uploadImage = this.uploadImage.bind(this);
       this.displayImage = this.displayImage.bind(this);
-      this.dropHandler = this.dropHandler.bind(this);
-      this.dragOverHandler = this.dragOverHandler.bind(this);
       this.handleImageLoaded = this.handleImageLoaded.bind(this);
+
       this.state = {
         imgURL: "",
         originalImageData: null,
         worker: this.props.worker
       };
     }
-    
+      
+    // Turns off browser's default drag behavior over the target element to allow seamless drag-and-drop of image to edit
+    dragOverHandler(event) {
+      event.preventDefault();
+    }
+
+    // Upon drop event on target element, confirms that dropped file is a file and calls displayImage function to display the dropped file
+    dropHandler(event) {
+      event.preventDefault();
+      let file;
+      if (event.dataTransfer.items) {
+        if (event.dataTransfer.items[0].kind === 'file') {
+          file = event.dataTransfer.items[0].getAsFile();
+        }
+        else {
+          file = event.dataTransfer.files[0];
+        }
+        this.displayImage(file);
+      }
+    }
+
+    // Upon click of browse button, displays file browser to allow selection of image to edit
+    browseFiles(event) {
+      event.preventDefault();
+      document.getElementById("browse-files").click();
+    }
+  
+    // Upon selection of image from file browser, confirms that a file was uploaded and calls displayImage function to display the selected file
     uploadImage(event) {
       const fileInput = document.getElementById("browse-files");
       const uploadedFiles = fileInput.files;
@@ -26,8 +57,8 @@ export default class Content extends React.Component {
       }
     }
   
+    // Determines whether dropped file is an allowed image type, and if so hides image dropper view and sets state variable to render the image
     displayImage(file) {
-      console.log(file);
       const imageTypes = ['image/jpg','image/jpeg','image/png','image/raw','image/cr2','image/nef','image/bmp','image/tif','image/tiff'];
       if (file && imageTypes.includes(file['type'])) {
         document.getElementsByClassName("drop")[0].style.display = "none";
@@ -35,35 +66,7 @@ export default class Content extends React.Component {
       }
     }
   
-    // Recognize drop event on target element
-    dropHandler(event) {
-      console.log("Drop handler");
-      event.preventDefault();
-      let file;
-      if (event.dataTransfer.items) {
-        if (event.dataTransfer.items[0].kind === 'file') {
-          file = event.dataTransfer.items[0].getAsFile();
-          console.log("file name: " + file.name);
-        }
-        else {
-          file = event.dataTransfer.files[0];
-          console.log("name: " + file.name);
-        }
-        this.displayImage(file);
-      }
-    }
-  
-    // Turns off browser's default drag behavior over the target element
-    dragOverHandler(event) {
-      console.log("Dragover handler");
-      event.preventDefault();
-    }
-  
-    browseFiles(event) {
-      event.preventDefault();
-      document.getElementById("browse-files").click();
-    }
-  
+    // Upon loading of new image, draws the image onto onscreen canvas to display editing progress. Saves new image data to state variable.
     handleImageLoaded(event) {
       let myImg = document.getElementById("image-upload");
       let imgCanvas = document.getElementById("image-canvas");
@@ -83,12 +86,10 @@ export default class Content extends React.Component {
     }
   
     render() {
-			console.log("re-render content");
-			console.log(this.state);
       return (
         <div className="content">
           <div className="drop" onDrop={this.dropHandler} onDragOver={this.dragOverHandler}>
-            <p>drag and drop a file to edit</p>
+            <p>Drag and drop an image to edit</p>
             <input type="file" id="browse-files" name="file" accept=".jpg,.jpeg,.png,.raw,.cr2,.nef,.bmp,.tif,.tiff" onChange={this.uploadImage}/>
             <button id="custom-upload" onClick={this.browseFiles}>browse</button>
           </div>
