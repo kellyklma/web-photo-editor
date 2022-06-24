@@ -1,5 +1,5 @@
 # Web photo editor - built with React
-A simple [photo editor](img-webitor.herokuapp.com) to get the job done quickly and neatly
+A simple [photo editor](https://img-webitor.herokuapp.com) to get the job done quickly and neatly
 
 
 ## Technologies
