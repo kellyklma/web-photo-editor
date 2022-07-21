@@ -8,6 +8,7 @@ import Slider from '@mui/material/Slider';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import DownloadIcon from '@mui/icons-material/Download';
+import UploadIcon from '@mui/icons-material/Upload';
 import HistoryIcon from '@mui/icons-material/History';
 
 // Designates colors for material UI components: sliders, switches, labels
@@ -26,6 +27,21 @@ const theme = createTheme({
         contrastText: '#000',
       },
     },
+    // typography: {
+    //   fontFamily: [
+    //     "-apple-system", 
+    //     "BlinkMacSystemFont", 
+    //     'Segoe UI', 
+    //     'Roboto', 
+    //     'Oxygen',
+    //     'Ubuntu', 
+    //     'Cantarell', 
+    //     'Fira Sans', 
+    //     'Droid Sans', 
+    //     'Helvetica Neue',
+    //     "sans-serif"
+    //   ].join(",")
+    // }
   });
 
 export default class Editor extends React.Component {
@@ -63,7 +79,7 @@ export default class Editor extends React.Component {
 		componentDidUpdate(prevProps) {
 			if (prevProps.originalImageData !== this.props.originalImageData) {
 				this.setState({ 
-          originalImageData: this.props.originalImageData,
+          originalImageData: this.props.originalImageData, // used to check if image data is replaced by new upload
 					brightnessValue: 0,
 					contrastValue: 0,
           grayscaleChecked: false,
@@ -218,56 +234,65 @@ export default class Editor extends React.Component {
       return (
         <div id="editor"> 
           <div id="revert-upload">
-            <button id="editor-revert" className="editor-btn" onClick={this.revert}><HistoryIcon/></button>
-            <button id="editor-download" className="editor-btn" onClick={this.handleDownload}><DownloadIcon/></button>
-            <button id="editor-upload" className="editor-btn" onClick={this.handleUpload}>Upload</button>
-            
+            <button id="editor-revert" className="editor-btn" onClick={this.revert} title="Revert changes"><HistoryIcon/></button>
+            <button id="editor-download" className="editor-btn" onClick={this.handleDownload} title="Export"><DownloadIcon/></button>
+            <button id="editor-upload" className="editor-btn" onClick={this.handleUpload} title="Import"><UploadIcon/></button>
           </div>
 					
-          
           <hr className="section-divider"></hr>
+          
           <ThemeProvider theme={theme}>
-            <Typography id="brightness-label" color="primary.contrastText" >Brightness</Typography>
+            <div class="slider-label">
+              <Typography id="brightness-label" color="primary.contrastText" >Brightness</Typography>
+              <Typography id="brightness-val-label" color="primary.contrastText" >{this.state.brightnessValue} </Typography>
+            </div>
             <Slider 
               id="brightness-slider" 
               aria-label="Brightness slider" 
               value={this.state.brightnessValue} 
               min={-100} 
               max={100} 
-              valueLabelDisplay="auto" 
+              valueLabelDisplay="off" 
+              size="small"
               onChange={this.changedBrightness}
               onChangeCommitted={this.handleBrightness}
             />
-            <Typography id="contrast-label" color="primary.contrastText" >Contrast</Typography>
+
+            <div class="slider-label">
+              <Typography id="contrast-label" color="primary.contrastText" >Contrast</Typography>
+              <Typography id="contrast-val-label" color="primary.contrastText" >{this.state.contrastValue} </Typography>
+            </div>
             <Slider 
               id="contrast-slider" 
-              aria-label="Saturation slider" 
+              aria-label="Contrast slider" 
               value={this.state.contrastValue} 
               min={-100} 
               max={100} 
-              valueLabelDisplay="auto" 
+              valueLabelDisplay="off" 
+              size="small"
               onChange={this.changedContrast}
               onChangeCommitted={this.handleContrast}
             />
+
             <hr className="section-divider"></hr>
+
             <FormGroup>
               <FormControlLabel id="grayscale-label" control={
                 <Switch 
                   checked={this.state.grayscaleChecked}
                   onChange={this.handleGrayscale}
-                  inputProps={{ 'aria-label': 'grayscale switch'}} 
+                  inputProps={{ 'aria-label': 'Grayscale switch'}} 
                 />
               } label="Grayscale" color="primary.contrastText" />
               <FormControlLabel id="invert-label" control={
                 <Switch 
                   checked={this.state.invertChecked}
                   onChange={this.handleInvert}
-                  inputProps={{ 'aria-label': 'invert switch'}} 
+                  inputProps={{ 'aria-label': 'Invert switch'}} 
                 />
               } label="Invert" color="primary.contrastText" />
             </FormGroup>
           </ThemeProvider>
-         
         </div>
       );
     }
