@@ -19,7 +19,7 @@ header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: calc(11px + 2vmin);
   color: white;
 }
 
@@ -30,6 +30,7 @@ header {
   justify-content: center;
   align-items: center;
   height: calc(100vh - 70px);
+  overflow: hidden;
 }
 
 .drop {
@@ -81,7 +82,7 @@ header {
 
 #editor {
   width: 20vw;
-  max-width: 180px;
+  max-width: 170px;
   height: 70vh;
   display: flex;
   flex-direction: column;
@@ -91,7 +92,7 @@ header {
 #revert-upload {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-evenly;
 }
 
 .editor-btn {
@@ -101,14 +102,12 @@ header {
   padding: 4px 7px;
   background-color: #282c34;
   color: white;
-  font-size: 15px;
   font-weight: 500;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
   cursor: pointer;
-  /* text-decoration: underline; */
 }
 
 .slider-label {
@@ -117,12 +116,12 @@ header {
   justify-content: space-between;
 }
 
-
 .section-divider {
   visibility: hidden;
-  margin: 4vh 0vh;
+  margin: calc(3vh) 0vh;
 }
 
 #grayscale-label, #invert-label {
   color: white;
+  margin-right: 0;
 }

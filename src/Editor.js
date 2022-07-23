@@ -235,8 +235,8 @@ export default class Editor extends React.Component {
         <div id="editor"> 
           <div id="revert-upload">
             <button id="editor-revert" className="editor-btn" onClick={this.revert} title="Revert changes"><HistoryIcon/></button>
-            <button id="editor-download" className="editor-btn" onClick={this.handleDownload} title="Export"><DownloadIcon/></button>
-            <button id="editor-upload" className="editor-btn" onClick={this.handleUpload} title="Import"><UploadIcon/></button>
+            <button id="editor-download" className="editor-btn" onClick={this.handleDownload} title="Download"><DownloadIcon/></button>
+            <button id="editor-upload" className="editor-btn" onClick={this.handleUpload} title="Upload"><UploadIcon/></button>
           </div>
 					
           <hr className="section-divider"></hr>
